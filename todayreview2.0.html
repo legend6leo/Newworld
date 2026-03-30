@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>今日复盘</title>
+
+<style>
+:root {
+  --bg-light: #eef2ff;
+  --bg-dark: #0f1020;
+  --text-light: #1c1c1e;
+  --text-dark: #f2f2f7;
+  --card-light: rgba(255, 255, 255, 0.72);
+  --card-dark: rgba(28, 30, 50, 0.7);
+  --line-light: rgba(64, 81, 181, 0.08);
+  --line-dark: rgba(255, 255, 255, 0.12);
+  --accent-1: #5b6cff;
+  --accent-2: #8e4dff;
+  --danger: #ff4d4f;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI";
+  max-width: 600px;
+  margin: auto;
+  padding: 22px 20px 34px;
+  transition: all 0.35s ease;
+  position: relative;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  z-index: -1;
+  border-radius: 999px;
+  filter: blur(50px);
+  pointer-events: none;
+  opacity: 0.75;
+}
+
+body::before {
+  width: 260px;
+  height: 260px;
+  top: -70px;
+  left: -60px;
+  background: radial-gradient(circle, rgba(91,108,255,0.65) 0%, rgba(91,108,255,0) 70%);
+}
+
+body::after {
+  width: 300px;
+  height: 300px;
+  right: -80px;
+  bottom: -120px;
+  background: radial-gradient(circle, rgba(142,77,255,0.62) 0%, rgba(142,77,255,0) 70%);
+}
+
+/* 日间 */
+body.light {
+  background:
+    linear-gradient(130deg, rgba(255,255,255,0.76), rgba(255,255,255,0.4)),
+    radial-gradient(circle at 85% 10%, rgba(91,108,255,0.12), transparent 45%),
+    var(--bg-light);
+  color: var(--text-light);
+}
+
+/* 夜间 */
+body.dark {
+  background:
+    radial-gradient(circle at 12% 0%, rgba(91,108,255,0.25), transparent 46%),
+    radial-gradient(circle at 100% 100%, rgba(142,77,255,0.2), transparent 40%),
+    var(--bg-dark);
+  color: var(--text-dark);
+}
+
+h2, h3 {
+  letter-spacing: 0.4px;
+}
+
+h2 {
+  margin: 10px 2px 14px;
+  font-size: 29px;
+  font-weight: 800;
+  text-shadow: 0 8px 30px rgba(91, 108, 255, 0.2);
+}
+
+.card {
+  padding: 16px 16px 14px;
+  border-radius: 18px;
+  margin-top: 14px;
+  border: 1px solid transparent;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 15px 35px rgba(16, 24, 40, 0.12);
+}
+
+.light .card {
+  background: var(--card-light);
+  border-color: rgba(255,255,255,0.6);
+}
+
+.dark .card {
+  background: var(--card-dark);
+  border-color: rgba(255,255,255,0.08);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+}
+
+/* ⭐ 控制输入区域宽度 */
+.input-wrap {
+  padding: 0 6px;
+}
+
+input, textarea {
+  width: calc(100% - 12px);
+  padding: 12px;
+  margin-top: 10px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  outline: none;
+  transition: all 0.24s ease;
+}
+
+.light input, .light textarea {
+  background: rgba(255, 255, 255, 0.88);
+  color: #141428;
+  border-color: rgba(91,108,255,0.18);
+}
+
+.dark input, .dark textarea {
+  background: rgba(78, 80, 106, 0.38);
+  color: white;
+  border-color: rgba(255,255,255,0.14);
+}
+
+input:focus, textarea:focus {
+  border-color: rgba(91,108,255,0.66);
+  box-shadow: 0 0 0 4px rgba(91,108,255,0.16);
+  transform: translateY(-1px);
+}
+
+textarea {
+  resize: vertical;
+  min-height: 84px;
+  line-height: 1.5;
+  font-family: inherit;
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  border-radius: 12px;
+  border: none;
+  font-weight: 600;
+  background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+  color: #fff;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.25s ease, opacity 0.2s ease;
+  box-shadow: 0 10px 24px rgba(91,108,255,0.33);
+}
+
+.dark button {
+  box-shadow: 0 10px 24px rgba(91,108,255,0.4);
+}
+
+button:hover {
+  transform: translateY(-2px);
+}
+
+button:active {
+  transform: translateY(0);
+  opacity: 0.9;
+}
+
+button.delete {
+  color: var(--danger);
+  background: transparent;
+  width: auto;
+  box-shadow: none;
+  margin-top: 0;
+  padding: 2px 6px;
+  font-size: 16px;
+}
+
+button.delete:hover {
+  transform: none;
+  opacity: 0.8;
+}
+
+.note {
+  padding: 12px 13px;
+  margin-top: 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: transform 0.2s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  animation: riseIn 0.35s ease both;
+}
+
+.light .note {
+  background: rgba(255,255,255,0.84);
+  border-color: rgba(91,108,255,0.14);
+}
+
+.dark .note {
+  background: rgba(77,79,104,0.32);
+  border-color: rgba(255,255,255,0.08);
+}
+
+.note:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.16);
+  border-color: rgba(91,108,255,0.45);
+}
+
+.time {
+  font-size: 12px;
+  opacity: 0.72;
+  font-weight: 600;
+}
+
+.small {
+  font-size: 12px;
+  opacity: 0.66;
+}
+
+.today {
+  color: var(--accent-1);
+  font-weight: bold;
+  margin-top: 6px;
+  display: inline-block;
+  text-shadow: 0 4px 12px rgba(91,108,255,0.34);
+}
+
+/* ⭐ 底部按钮并排 */
+.row {
+  display: flex;
+  gap: 10px;
+}
+
+.row button {
+  flex: 1;
+}
+
+#streak {
+  padding: 9px 11px;
+  border-radius: 10px;
+  border: 1px dashed var(--line-dark);
+}
+
+.light #streak {
+  border-color: var(--line-light);
+  background: rgba(255,255,255,0.65);
+}
+
+.dark #streak {
+  background: rgba(255,255,255,0.02);
+}
+
+@keyframes riseIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+</style>
+
+</head>
+
+<body class="light">
+
+<h2>🌙 今日复盘</h2>
+
+<div class="card">
+<button onclick="toggleMode()">🌗 切换日/夜模式</button>
+
+<div class="input-wrap">
+📅 选择日期：
+<input type="date" id="datePicker" onchange="changeDate()" />
+<div id="todayLabel"></div>
+
+<input id="noteTitle" placeholder="标题（将作为记录第一行）" />
+<textarea id="noteContent" placeholder="内容（可多行）&#10;Enter 记录，Shift+Enter 换行"></textarea>
+</div>
+
+<button onclick="addNote()">➕ 记录</button>
+<button onclick="saveDay()" style="opacity:0.6">✅ 收集</button>
+</div>
+
+<div class="card">
+<h3>🕰 时间轴</h3>
+<div id="timeline"></div>
+</div>
+
+<div class="card">
+<div class="row">
+<button onclick="toggleStreak()">🔥 收集天数</button>
+<button onclick="exportData()">📦 导出数据</button>
+</div>
+<div id="streak" style="margin-top:10px;"></div>
+</div>
+
+<script>
+function getTodayLocal() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth()+1).padStart(2,'0');
+  const d = String(now.getDate()).padStart(2,'0');
+  return `${y}-${m}-${d}`;
+}
+
+let data = JSON.parse(localStorage.getItem("diaryData")) || { entries: [] };
+
+let currentDate = getTodayLocal();
+document.getElementById("datePicker").value = currentDate;
+
+/* 模式 */
+let mode = localStorage.getItem("mode") || "light";
+document.body.className = mode;
+
+function toggleMode() {
+  mode = mode === "light" ? "dark" : "light";
+  document.body.className = mode;
+  localStorage.setItem("mode", mode);
+}
+
+/* 数据 */
+function findEntry(date) {
+  return data.entries.find(e => e.date === date);
+}
+
+function getOrCreateEntry(date) {
+  let entry = findEntry(date);
+  if (!entry) {
+    entry = { date, timeline: [], collected: false };
+    data.entries.push(entry);
+  } else if (typeof entry.collected !== "boolean") {
+    entry.collected = false;
+  }
+  return entry;
+}
+
+function getTime() {
+  return new Date().toTimeString().slice(0,5);
+}
+
+function fakeAI(content) {
+  return {
+    title: content.slice(0,10),
+    category: "想法",
+    summary: "一个当下的念头"
+  };
+}
+
+function escapeHtml(text) {
+  return String(text)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function splitNoteText(text) {
+  const lines = String(text || "").split("\n");
+  const title = (lines.shift() || "").trim();
+  const content = lines.join("\n").trim();
+  return { title, content };
+}
+
+/* 添加 */
+function addNote() {
+  const titleInput = document.getElementById("noteTitle");
+  const contentInput = document.getElementById("noteContent");
+  const title = titleInput.value.trim();
+  const detail = contentInput.value.trim();
+  if (!title) return;
+
+  const fullContent = detail ? `${title}\n${detail}` : title;
+  const ai = fakeAI(fullContent);
+
+  const entry = getOrCreateEntry(currentDate);
+
+  entry.timeline.push({
+    time: getTime(),
+    content: fullContent,
+    title,
+    detail,
+    category: ai.category,
+    summary: ai.summary
+  });
+
+  titleInput.value = "";
+  contentInput.value = "";
+
+  saveLocal();
+  renderTimeline();
+}
+
+/* 渲染 */
+function renderTimeline() {
+  const entry = findEntry(currentDate);
+  const container = document.getElementById("timeline");
+  container.innerHTML = "";
+
+  if (!entry || entry.timeline.length === 0) {
+    container.innerHTML = "<p style='opacity:0.6'>这一天还没有记录</p>";
+    return;
+  }
+
+  entry.timeline.forEach((n, index) => {
+    const div = document.createElement("div");
+    div.className = "note";
+
+    div.onclick = () => editNote(index);
+
+    const title = n.title || splitNoteText(n.content).title;
+    const detail = typeof n.detail === "string" ? n.detail : splitNoteText(n.content).content;
+
+    div.innerHTML = `
+      <div style="display:flex; justify-content:space-between;">
+        <div class="time">${escapeHtml(n.time)}</div>
+        <button class="delete" onclick="event.stopPropagation(); deleteNote(${index})">✕</button>
+      </div>
+      <b>${escapeHtml(title)}</b>
+      <div>${escapeHtml(detail).replaceAll("\n", "<br>")}</div>
+      <div class="small">${escapeHtml(n.category)} · ${escapeHtml(n.summary)}</div>
+    `;
+
+    container.appendChild(div);
+  });
+}
+
+/* 编辑 */
+function editNote(index) {
+  const entry = findEntry(currentDate);
+  if (!entry) return;
+  const note = entry.timeline[index];
+
+  const parsed = splitNoteText(note.content);
+  const currentTitle = note.title || parsed.title;
+  const currentDetail = typeof note.detail === "string" ? note.detail : parsed.content;
+
+  const newTitle = prompt("编辑标题：", currentTitle);
+  if (newTitle === null) return;
+  const titleTrimmed = newTitle.trim();
+  if (!titleTrimmed) return;
+
+  const newDetail = prompt("编辑内容：", currentDetail);
+  if (newDetail === null) return;
+  const detailTrimmed = newDetail.trim();
+
+  const fullContent = detailTrimmed ? `${titleTrimmed}\n${detailTrimmed}` : titleTrimmed;
+
+  const ai = fakeAI(fullContent);
+
+  note.content = fullContent;
+  note.title = titleTrimmed;
+  note.detail = detailTrimmed;
+  note.category = ai.category;
+  note.summary = ai.summary;
+
+  saveLocal();
+  renderTimeline();
+}
+
+/* 删除 */
+function deleteNote(index) {
+  if (!confirm("确定删除？")) return;
+  const entry = findEntry(currentDate);
+  if (!entry) return;
+  entry.timeline.splice(index, 1);
+  saveLocal();
+  renderTimeline();
+}
+
+/* 日期 */
+function changeDate() {
+  currentDate = document.getElementById("datePicker").value;
+  renderTimeline();
+  updateTodayLabel();
+}
+
+function updateTodayLabel() {
+  const label = document.getElementById("todayLabel");
+  if (currentDate === getTodayLocal()) {
+    label.innerHTML = "<span class='today'>👉 今天</span>";
+  } else {
+    label.innerHTML = "";
+  }
+}
+
+/* 打卡 */
+function saveDay() {
+  const entry = findEntry(currentDate);
+  if (!entry || entry.timeline.length === 0) {
+    alert("这一天还没有记录，先写一条再收集吧");
+    return;
+  }
+  entry.collected = true;
+  saveLocal();
+  alert("✅ 收集成功");
+}
+
+function saveLocal() {
+  localStorage.setItem("diaryData", JSON.stringify(data));
+}
+
+/* ⭐ 收集天数（隐藏逻辑） */
+let showStreak = false;
+
+function toggleStreak() {
+  showStreak = !showStreak;
+  const el = document.getElementById("streak");
+
+  if (showStreak) {
+    el.innerHTML = `连续收集：${calculateStreak()} 天`;
+  } else {
+    el.innerHTML = "";
+  }
+}
+
+function calculateStreak() {
+  const dates = data.entries
+    .filter(e => e.collected && Array.isArray(e.timeline) && e.timeline.length > 0)
+    .map(e => e.date)
+    .sort()
+    .reverse();
+  let streak = 0;
+  let current = new Date(getTodayLocal());
+
+  for (let d of dates) {
+    const date = new Date(d);
+    if (current.toDateString() === date.toDateString()) {
+      streak++;
+      current.setDate(current.getDate() - 1);
+    } else break;
+  }
+  return streak;
+}
+
+/* 导出 */
+function exportData() {
+  const blob = new Blob([JSON.stringify(data, null, 2)], {
+    type: "application/json"
+  });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `diary-data-${getTodayLocal()}.json`;
+  a.click();
+}
+
+/* 初始化 */
+document.getElementById("noteContent").addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    addNote();
+  }
+});
+
+renderTimeline();
+updateTodayLabel();
+</script>
+
+</body>
+</html>

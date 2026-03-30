@@ -112,7 +112,7 @@ h2 {
   padding: 0 6px;
 }
 
-input, textarea {
+input {
   width: calc(100% - 12px);
   padding: 12px;
   margin-top: 10px;
@@ -122,29 +122,22 @@ input, textarea {
   transition: all 0.24s ease;
 }
 
-.light input, .light textarea {
+.light input {
   background: rgba(255, 255, 255, 0.88);
   color: #141428;
   border-color: rgba(91,108,255,0.18);
 }
 
-.dark input, .dark textarea {
+.dark input {
   background: rgba(78, 80, 106, 0.38);
   color: white;
   border-color: rgba(255,255,255,0.14);
 }
 
-input:focus, textarea:focus {
+input:focus {
   border-color: rgba(91,108,255,0.66);
   box-shadow: 0 0 0 4px rgba(91,108,255,0.16);
   transform: translateY(-1px);
-}
-
-textarea {
-  resize: vertical;
-  min-height: 84px;
-  line-height: 1.5;
-  font-family: inherit;
 }
 
 button {
@@ -285,7 +278,7 @@ button.delete:hover {
 <input type="date" id="datePicker" onchange="changeDate()" />
 <div id="todayLabel"></div>
 
-<textarea id="noteContent" placeholder="记录此刻的想法...&#10;Enter 记录，Shift+Enter 换行"></textarea>
+<input id="noteContent" placeholder="记录此刻的想法..." />
 </div>
 
 <button onclick="addNote()">➕ 记录</button>
@@ -529,10 +522,7 @@ function exportData() {
 
 /* 初始化 */
 document.getElementById("noteContent").addEventListener("keydown", (e) => {
-  if (e.key === "Enter" && !e.shiftKey) {
-    e.preventDefault();
-    addNote();
-  }
+  if (e.key === "Enter") addNote();
 });
 
 renderTimeline();

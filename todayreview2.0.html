@@ -285,7 +285,8 @@ button.delete:hover {
 <input type="date" id="datePicker" onchange="changeDate()" />
 <div id="todayLabel"></div>
 
-<textarea id="noteContent" placeholder="记录此刻的想法...&#10;Enter 记录，Shift+Enter 换行"></textarea>
+<input id="noteTitle" placeholder="标题（将作为记录第一行）" />
+<textarea id="noteContent" placeholder="内容（可多行）&#10;Enter 记录，Shift+Enter 换行"></textarea>
 </div>
 
 <button onclick="addNote()">➕ 记录</button>
@@ -366,23 +367,37 @@ function escapeHtml(text) {
     .replaceAll("'", "&#39;");
 }
 
+function splitNoteText(text) {
+  const lines = String(text || "").split("\n");
+  const title = (lines.shift() || "").trim();
+  const content = lines.join("\n").trim();
+  return { title, content };
+}
+
 /* 添加 */
 function addNote() {
-  const content = document.getElementById("noteContent").value.trim();
-  if (!content) return;
+  const titleInput = document.getElementById("noteTitle");
+  const contentInput = document.getElementById("noteContent");
+  const title = titleInput.value.trim();
+  const detail = contentInput.value.trim();
+  if (!title) return;
+
+  const fullContent = detail ? `${title}\n${detail}` : title;
+  const ai = fakeAI(fullContent);
 
   const entry = getOrCreateEntry(currentDate);
-  const ai = fakeAI(content);
 
   entry.timeline.push({
     time: getTime(),
-    content,
-    title: ai.title,
+    content: fullContent,
+    title,
+    detail,
     category: ai.category,
     summary: ai.summary
   });
 
-  document.getElementById("noteContent").value = "";
+  titleInput.value = "";
+  contentInput.value = "";
 
   saveLocal();
   renderTimeline();
@@ -405,13 +420,16 @@ function renderTimeline() {
 
     div.onclick = () => editNote(index);
 
+    const title = n.title || splitNoteText(n.content).title;
+    const detail = typeof n.detail === "string" ? n.detail : splitNoteText(n.content).content;
+
     div.innerHTML = `
       <div style="display:flex; justify-content:space-between;">
         <div class="time">${escapeHtml(n.time)}</div>
         <button class="delete" onclick="event.stopPropagation(); deleteNote(${index})">✕</button>
       </div>
-      <b>${escapeHtml(n.title)}</b>
-      <div>${escapeHtml(n.content)}</div>
+      <b>${escapeHtml(title)}</b>
+      <div>${escapeHtml(detail).replaceAll("\n", "<br>")}</div>
       <div class="small">${escapeHtml(n.category)} · ${escapeHtml(n.summary)}</div>
     `;
 
@@ -425,15 +443,26 @@ function editNote(index) {
   if (!entry) return;
   const note = entry.timeline[index];
 
-  const newContent = prompt("编辑内容：", note.content);
-  if (newContent === null) return;
-  const trimmed = newContent.trim();
-  if (!trimmed) return;
+  const parsed = splitNoteText(note.content);
+  const currentTitle = note.title || parsed.title;
+  const currentDetail = typeof note.detail === "string" ? note.detail : parsed.content;
 
-  const ai = fakeAI(trimmed);
+  const newTitle = prompt("编辑标题：", currentTitle);
+  if (newTitle === null) return;
+  const titleTrimmed = newTitle.trim();
+  if (!titleTrimmed) return;
 
-  note.content = trimmed;
-  note.title = ai.title;
+  const newDetail = prompt("编辑内容：", currentDetail);
+  if (newDetail === null) return;
+  const detailTrimmed = newDetail.trim();
+
+  const fullContent = detailTrimmed ? `${titleTrimmed}\n${detailTrimmed}` : titleTrimmed;
+
+  const ai = fakeAI(fullContent);
+
+  note.content = fullContent;
+  note.title = titleTrimmed;
+  note.detail = detailTrimmed;
   note.category = ai.category;
   note.summary = ai.summary;
 

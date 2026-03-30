@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>今日复盘</title>
+
+<style>
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI";
+  max-width: 600px;
+  margin: auto;
+  padding: 20px;
+  transition: all 0.3s;
+}
+
+/* 日间 */
+body.light {
+  background: #f2f2f7;
+  color: #1c1c1e;
+}
+
+/* 夜间 */
+body.dark {
+  background: #1c1c1e;
+  color: #f2f2f7;
+}
+
+.card {
+  padding: 16px;
+  border-radius: 16px;
+  margin-top: 16px;
+}
+
+.light .card { background: #fff; }
+.dark .card { background: #2c2c2e; }
+
+/* ⭐ 控制输入区域宽度 */
+.input-wrap {
+  padding: 0 6px;
+}
+
+input {
+  width: calc(100% - 12px);
+  padding: 12px;
+  margin-top: 10px;
+  border-radius: 12px;
+  border: none;
+}
+
+.light input { background: #fafafa; }
+.dark input { background: #3a3a3c; color: white; }
+
+button {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  border-radius: 12px;
+  border: none;
+  background: #ffffff;
+  color: #1c1c1e;
+}
+
+.dark button {
+  background: #3a3a3c;
+  color: white;
+}
+
+button.delete {
+  color: #ff3b30;
+  background: transparent;
+  width: auto;
+}
+
+.note {
+  padding: 12px;
+  margin-top: 10px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+
+.light .note { background: #fafafa; }
+.dark .note { background: #3a3a3c; }
+
+.time {
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+.small {
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+.today {
+  color: #000;
+  font-weight: bold;
+}
+
+/* ⭐ 底部按钮并排 */
+.row {
+  display: flex;
+  gap: 10px;
+}
+
+.row button {
+  flex: 1;
+}
+</style>
+
+</head>
+
+<body class="light">
+
+<h2>🌙 今日复盘</h2>
+
+<div class="card">
+<button onclick="toggleMode()">🌗 切换日/夜模式</button>
+
+<div class="input-wrap">
+📅 选择日期：
+<input type="date" id="datePicker" onchange="changeDate()" />
+<div id="todayLabel"></div>
+
+<input id="noteContent" placeholder="记录此刻的想法..." />
+</div>
+
+<button onclick="addNote()">➕ 记录</button>
+<button onclick="saveDay()" style="opacity:0.6">✅ 收集</button>
+</div>
+
+<div class="card">
+<h3>🕰 时间轴</h3>
+<div id="timeline"></div>
+</div>
+
+<div class="card">
+<div class="row">
+<button onclick="toggleStreak()">🔥 收集天数</button>
+<button onclick="exportData()">📦 导出数据</button>
+</div>
+<div id="streak" style="margin-top:10px;"></div>
+</div>
+
+<script>
+function getTodayLocal() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth()+1).padStart(2,'0');
+  const d = String(now.getDate()).padStart(2,'0');
+  return `${y}-${m}-${d}`;
+}
+
+let data = JSON.parse(localStorage.getItem("diaryData")) || { entries: [] };
+
+let currentDate = getTodayLocal();
+document.getElementById("datePicker").value = currentDate;
+
+/* 模式 */
+let mode = localStorage.getItem("mode") || "light";
+document.body.className = mode;
+
+function toggleMode() {
+  mode = mode === "light" ? "dark" : "light";
+  document.body.className = mode;
+  localStorage.setItem("mode", mode);
+}
+
+/* 数据 */
+function getEntry(date) {
+  let entry = data.entries.find(e => e.date === date);
+  if (!entry) {
+    entry = { date, timeline: [] };
+    data.entries.push(entry);
+  }
+  return entry;
+}
+
+function getTime() {
+  return new Date().toTimeString().slice(0,5);
+}
+
+function fakeAI(content) {
+  return {
+    title: content.slice(0,10),
+    category: "想法",
+    summary: "一个当下的念头"
+  };
+}
+
+/* 添加 */
+function addNote() {
+  const content = document.getElementById("noteContent").value;
+  if (!content) return;
+
+  const entry = getEntry(currentDate);
+  const ai = fakeAI(content);
+
+  entry.timeline.push({
+    time: getTime(),
+    content,
+    title: ai.title,
+    category: ai.category,
+    summary: ai.summary
+  });
+
+  document.getElementById("noteContent").value = "";
+
+  saveLocal();
+  renderTimeline();
+}
+
+/* 渲染 */
+function renderTimeline() {
+  const entry = getEntry(currentDate);
+  const container = document.getElementById("timeline");
+  container.innerHTML = "";
+
+  if (entry.timeline.length === 0) {
+    container.innerHTML = "<p style='opacity:0.6'>这一天还没有记录</p>";
+    return;
+  }
+
+  entry.timeline.forEach((n, index) => {
+    const div = document.createElement("div");
+    div.className = "note";
+
+    div.onclick = () => editNote(index);
+
+    div.innerHTML = `
+      <div style="display:flex; justify-content:space-between;">
+        <div class="time">${n.time}</div>
+        <button class="delete" onclick="event.stopPropagation(); deleteNote(${index})">✕</button>
+      </div>
+      <b>${n.title}</b>
+      <div>${n.content}</div>
+      <div class="small">${n.category} · ${n.summary}</div>
+    `;
+
+    container.appendChild(div);
+  });
+}
+
+/* 编辑 */
+function editNote(index) {
+  const entry = getEntry(currentDate);
+  const note = entry.timeline[index];
+
+  const newContent = prompt("编辑内容：", note.content);
+  if (newContent === null) return;
+
+  const ai = fakeAI(newContent);
+
+  note.content = newContent;
+  note.title = ai.title;
+  note.category = ai.category;
+  note.summary = ai.summary;
+
+  saveLocal();
+  renderTimeline();
+}
+
+/* 删除 */
+function deleteNote(index) {
+  if (!confirm("确定删除？")) return;
+  const entry = getEntry(currentDate);
+  entry.timeline.splice(index, 1);
+  saveLocal();
+  renderTimeline();
+}
+
+/* 日期 */
+function changeDate() {
+  currentDate = document.getElementById("datePicker").value;
+  renderTimeline();
+  updateTodayLabel();
+}
+
+function updateTodayLabel() {
+  const label = document.getElementById("todayLabel");
+  if (currentDate === getTodayLocal()) {
+    label.innerHTML = "<span class='today'>👉 今天</span>";
+  } else {
+    label.innerHTML = "";
+  }
+}
+
+/* 打卡 */
+function saveDay() {
+  saveLocal();
+  alert("✅ 收集成功");
+}
+
+function saveLocal() {
+  localStorage.setItem("diaryData", JSON.stringify(data));
+}
+
+/* ⭐ 收集天数（隐藏逻辑） */
+let showStreak = false;
+
+function toggleStreak() {
+  showStreak = !showStreak;
+  const el = document.getElementById("streak");
+
+  if (showStreak) {
+    el.innerHTML = `连续收集：${calculateStreak()} 天`;
+  } else {
+    el.innerHTML = "";
+  }
+}
+
+function calculateStreak() {
+  const dates = data.entries.map(e => e.date).sort().reverse();
+  let streak = 0;
+  let current = new Date(getTodayLocal());
+
+  for (let d of dates) {
+    const date = new Date(d);
+    if (current.toDateString() === date.toDateString()) {
+      streak++;
+      current.setDate(current.getDate() - 1);
+    } else break;
+  }
+  return streak;
+}
+
+/* 导出 */
+function exportData() {
+  const blob = new Blob([JSON.stringify(data, null, 2)], {
+    type: "application/json"
+  });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "diary-data.json";
+  a.click();
+}
+
+/* 初始化 */
+renderTimeline();
+updateTodayLabel();
+</script>
+
+</body>
+</html>

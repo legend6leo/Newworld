@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<title>每日复盘</title>
+<style>
+body {
+  font-family: sans-serif;
+  max-width: 700px;
+  margin: auto;
+  padding: 20px;
+  background: #f7f7f7;
+}
+textarea, input {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+}
+button {
+  margin-top: 10px;
+  padding: 10px;
+}
+.note {
+  background: white;
+  padding: 10px;
+  margin-top: 5px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>🌙 今日复盘</h2>
+
+<textarea id="mainText" placeholder="写下今天的整体复盘..."></textarea>
+
+<h3>➕ 添加小记录</h3>
+<select id="noteType">
+  <option>灵感</option>
+  <option>情绪</option>
+  <option>失败</option>
+  <option>成长</option>
+</select>
+
+<input id="noteContent" placeholder="写点什么..." />
+<button onclick="addNote()">添加</button>
+
+<div id="notes"></div>
+
+<button onclick="generateAI()">生成今日总结</button>
+
+<h3>✨ AI总结</h3>
+<div id="aiOutput"></div>
+
+<script>
+let notes = [];
+
+function addNote() {
+  const type = document.getElementById("noteType").value;
+  const content = document.getElementById("noteContent").value;
+
+  notes.push({ type, content });
+  renderNotes();
+}
+
+function renderNotes() {
+  const container = document.getElementById("notes");
+  container.innerHTML = "";
+
+  notes.forEach(n => {
+    const div = document.createElement("div");
+    div.className = "note";
+    div.innerText = `${n.type}: ${n.content}`;
+    container.appendChild(div);
+  });
+}
+
+function generateAI() {
+  const mainText = document.getElementById("mainText").value;
+
+  const summary = "今天你经历了一些事情，有思考也有情绪波动，总体来说你在认真生活。";
+  const analysis = "你在情绪和行动之间有一些拉扯，可能需要更明确优先级。";
+
+  document.getElementById("aiOutput").innerHTML =
+    "<b>今日总结：</b><br>" + summary +
+    "<br><br><b>问题分析：</b><br>" + analysis;
+}
+</script>
+
+</body>
+</html>
